@@ -15,6 +15,8 @@ def Φ (x : ℝ) := logb 2 (1 + (2 : ℝ) ^ x)
 
 def E i r := Φ (i - r) - Φ i + r * deriv Φ i
 
+def Q Δ i r := E i r / E i Δ
+
 lemma err_eq_zero : E i 0 = 0 := by simp [E]
 
 /- Derivatives and differentiability of Φ -/

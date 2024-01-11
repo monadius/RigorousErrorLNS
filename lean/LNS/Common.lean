@@ -4,6 +4,8 @@ import Mathlib.Analysis.Calculus.Deriv.Comp
 
 -- TODO: generalize, simplify and add to Mathlib
 
+/- Derivatives for compositions with a linear transformation -/
+
 lemma DifferentiableAt.comp_linear {a b x : ℝ} {f : ℝ → ℝ} (ha : a ≠ 0) :
     DifferentiableAt ℝ (fun x => f (a * x + b)) x ↔ DifferentiableAt ℝ f (a * x + b) := by
   constructor <;> intro df
@@ -54,3 +56,11 @@ lemma deriv_comp_sub_const {a x : ℝ} {f : ℝ → ℝ} :
   have : ∀ x, x - a = 1 * x + -a := by intro; ring
   simp only [this, deriv_comp_linear]
   rw [one_mul]
+
+/- Monotonicity of restricted function -/
+
+lemma monotone_restrict [Preorder α] [Preorder β] {f : α → β} {s : Set α} :
+    Monotone (s.restrict f) ↔ MonotoneOn f s := by simp [Set.restrict, Monotone, MonotoneOn]
+
+lemma antitone_restrict [Preorder α] [Preorder β] {f : α → β} {s : Set α} :
+    Antitone (s.restrict f) ↔ AntitoneOn f s := by simp [Set.restrict, Antitone, AntitoneOn]

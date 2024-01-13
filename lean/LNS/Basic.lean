@@ -11,13 +11,58 @@ namespace LNS
 
 open Real
 
+/- Φ⁺ from Introduction -/
+
 def Φ (x : ℝ) := logb 2 (1 + (2 : ℝ) ^ x)
 
-def E i r := Φ (i - r) - Φ i + r * deriv Φ i
+/- Iₓ and Rₓ correspond to iₓ and rₓ from Eq (1) -/
 
-def Q Δ i r := E i r / E i Δ
+def Iₓ (Δ x : ℝ) := Δ * Int.ceil (x / Δ)
+
+def Rₓ (Δ x : ℝ) := Iₓ Δ x - x
+
+/- Φₜ is the first order Taylor approximation of Φ⁺ from Eq (1) -/
+
+def Φₜ (Δ x : ℝ) := Φ (Iₓ Δ x) - Rₓ Δ x * deriv Φ (Iₓ Δ x)
+
+/- E i r is the error of the first order Taylor approximation
+   defined for all real i and r -/
+
+def E (i r : ℝ) := Φ (i - r) - Φ i + r * deriv Φ i
+
+def Q (Δ i r : ℝ) := E i r / E i Δ
 
 lemma err_eq_zero : E i 0 = 0 := by simp [E]
+
+lemma i_sub_r_eq_x (Δ x : ℝ) : Iₓ Δ x - Rₓ Δ x = x := by
+  simp only [Iₓ, Rₓ, sub_sub_cancel]
+
+lemma Φₜ_error : Φ x - Φₜ Δ x = E (Iₓ Δ x) (Rₓ Δ x) := by
+  simp only [Φₜ, E, i_sub_r_eq_x]; ring
+
+lemma x_le_ix {Δ} (hd : 0 < Δ) x : x ≤ Iₓ Δ x :=
+  (div_le_iff' hd).mp $ Int.le_ceil $ x / Δ
+
+lemma x_neg_iff_ix_neg {Δ} (hd : 0 < Δ) x : x ≤ 0 ↔ Iₓ Δ x ≤ 0 := by
+  constructor
+  · intro hx
+    apply mul_nonpos_of_nonneg_of_nonpos (le_of_lt hd)
+    rw [← Int.cast_zero, Int.cast_le, Int.ceil_le, Int.cast_zero]
+    exact div_nonpos_of_nonpos_of_nonneg hx (le_of_lt hd)
+  · exact le_trans (x_le_ix hd x)
+
+lemma rx_eq_fract {Δ x : ℝ} (hd : Δ ≠ 0) (ix : Iₓ Δ x ≠ x) :
+    Rₓ Δ x = Δ * (1 - Int.fract (x / Δ)) := by
+  -- unfold Rₓ Int.fract Iₓ
+  -- field_simp
+  -- rw [Int.ceil_sub_self_eq]
+  sorry
+
+lemma rx_nonneg {Δ} (hd : 0 < Δ) x : 0 ≤ Rₓ Δ x := by
+  sorry
+
+lemma rx_lt_delta {Δ} (hd : 0 < Δ) x : Rₓ Δ x < Δ := by
+  sorry
 
 /- Derivatives and differentiability of Φ -/
 

@@ -17,7 +17,7 @@ def Φ (x : ℝ) := logb 2 (1 + (2 : ℝ) ^ x)
 
 /- Iₓ and Rₓ correspond to iₓ and rₓ from Eq (1) -/
 
-def Iₓ (Δ x : ℝ) := Δ * Int.ceil (x / Δ)
+def Iₓ (Δ x : ℝ) := ⌈x / Δ⌉ * Δ
 
 def Rₓ (Δ x : ℝ) := Iₓ Δ x - x
 
@@ -41,28 +41,32 @@ lemma Φₜ_error : Φ x - Φₜ Δ x = E (Iₓ Δ x) (Rₓ Δ x) := by
   simp only [Φₜ, E, i_sub_r_eq_x]; ring
 
 lemma x_le_ix {Δ} (hd : 0 < Δ) x : x ≤ Iₓ Δ x :=
-  (div_le_iff' hd).mp $ Int.le_ceil $ x / Δ
+  (div_le_iff hd).mp $ Int.le_ceil $ x / Δ
 
 lemma x_neg_iff_ix_neg {Δ} (hd : 0 < Δ) x : x ≤ 0 ↔ Iₓ Δ x ≤ 0 := by
   constructor
   · intro hx
-    apply mul_nonpos_of_nonneg_of_nonpos (le_of_lt hd)
+    apply mul_nonpos_of_nonpos_of_nonneg _ (le_of_lt hd)
     rw [← Int.cast_zero, Int.cast_le, Int.ceil_le, Int.cast_zero]
     exact div_nonpos_of_nonpos_of_nonneg hx (le_of_lt hd)
   · exact le_trans (x_le_ix hd x)
 
+lemma rx_eq_zero_iff {Δ x : ℝ} : Rₓ Δ x = 0 ↔ Iₓ Δ x = x := by
+  simp only [Rₓ, Iₓ, sub_eq_zero]
+
 lemma rx_eq_fract {Δ x : ℝ} (hd : Δ ≠ 0) (ix : Iₓ Δ x ≠ x) :
     Rₓ Δ x = Δ * (1 - Int.fract (x / Δ)) := by
-  -- unfold Rₓ Int.fract Iₓ
-  -- field_simp
-  -- rw [Int.ceil_sub_self_eq]
-  sorry
+  unfold Rₓ Iₓ at *
+  rcases Int.fract_eq_zero_or_add_one_sub_ceil (x / Δ) with h | h
+  · exfalso; apply ix
+    rw [Int.ceil_eq_self.mpr h, div_mul_cancel _ hd]
+  · rw [h]; field_simp; ring
 
-lemma rx_nonneg {Δ} (hd : 0 < Δ) x : 0 ≤ Rₓ Δ x := by
-  sorry
+lemma rx_nonneg {Δ} (hd : 0 < Δ) x : 0 ≤ Rₓ Δ x :=
+  Int.ceil_div_mul_sub_nonneg hd
 
-lemma rx_lt_delta {Δ} (hd : 0 < Δ) x : Rₓ Δ x < Δ := by
-  sorry
+lemma rx_lt_delta {Δ} (hd : 0 < Δ) x : Rₓ Δ x < Δ :=
+  Int.ceil_div_mul_sub_lt hd
 
 /- Derivatives and differentiability of Φ -/
 

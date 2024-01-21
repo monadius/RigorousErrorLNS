@@ -1,6 +1,9 @@
 import Mathlib.Analysis.Calculus.Deriv.Add
 import Mathlib.Analysis.Calculus.Deriv.Mul
 import Mathlib.Analysis.Calculus.Deriv.Comp
+import Mathlib.Analysis.SpecialFunctions.Log.Base
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 
 -- TODO: generalize, simplify and add to Mathlib
 
@@ -56,6 +59,35 @@ lemma deriv_comp_sub_const {a x : ℝ} {f : ℝ → ℝ} :
   have : ∀ x, x - a = 1 * x + -a := by intro; ring
   simp only [this, deriv_comp_linear]
   rw [one_mul]
+
+section Derivatives
+
+/- Special derivatives -/
+
+open Real
+
+lemma HasDerivAt.const_rpow {f : ℝ → ℝ} {f' a : ℝ} (ha : 0 < a) (hf : HasDerivAt f f' x) :
+    HasDerivAt (fun x => a ^ f x) (f' * a ^ f x * Real.log a) x := by
+  rw [(by norm_num : f' * a ^ f x * Real.log a = 0 * f x * a ^ (f x - 1) + f' * a ^ f x * Real.log a)]
+  exact HasDerivAt.rpow (hasDerivAt_const x a) hf ha
+
+end Derivatives
+
+/- Some special limits -/
+
+section Limits
+
+open Real Filter Topology
+
+lemma tendsto_x_mul_inv_x : Tendsto (fun x : ℝ => x * x⁻¹) (𝓝[≠] 0) (𝓝 1) :=
+  tendsto_nhds_of_eventually_eq $ eventually_nhdsWithin_of_forall (fun _ => mul_inv_cancel)
+
+-- Adapted from this proof: https://github.com/leanprover-community/mathlib4/blob/052d8d57c394373282ac1b581e828d9f3625e94c/Mathlib/Analysis/SpecialFunctions/Log/Deriv.lean#L208-L215
+lemma tendsto_log_mul_inv_x (a : ℝ) : Tendsto (fun x : ℝ => log (a * x + 1) * x⁻¹) (𝓝[≠] 0) (𝓝 a) := by
+  simpa [mul_comm, hasDerivAt_iff_tendsto_slope, slope_fun_def] using
+     (((hasDerivAt_id (0 : ℝ)).const_mul a).add_const 1).log (by norm_num)
+
+end Limits
 
 /- Monotonicity of restricted function -/
 

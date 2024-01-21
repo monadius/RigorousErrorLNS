@@ -1,4 +1,3 @@
-import Mathlib.Analysis.Calculus.LHopital
 import LNS.Common
 import LNS.Basic
 
@@ -19,29 +18,6 @@ def R_opt (Δ : ℝ) :=
 variable {Δ r : Real}
 variable (delta_pos : Δ > 0)
 
-lemma lemma61 : Tendsto (fun i => Q Δ i r) atBot (𝓝 (Q_hi Δ r)) := by
-  sorry
-
-lemma lemma62 (hr1 : 0 ≤ r) (hr2 : r < Δ) : AntitoneOn (fun i => Q Δ i r) (Set.Iic 0) := by
-  sorry
-
-lemma q_lower_bound (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) : Q_lo Δ r ≤ Q Δ i r :=
-  lemma62 hr1 hr2 hi Set.right_mem_Iic hi
-
-lemma q_upper_bound (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) : Q Δ i r ≤ Q_hi Δ r := by
-  suffices h : ∀ᶠ (x : ℝ) in atBot, Q Δ i r ≤ Q Δ x r
-  · exact ge_of_tendsto (@lemma61 Δ r) h
-  · rw [eventually_atBot]
-    exact ⟨i, fun j ji => lemma62 hr1 hr2 (le_trans ji hi) hi ji⟩
-
-lemma lemma63 (hi : i ≤ 0) (hc : c ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) :
-    |Q Δ i r - Q Δ c r| ≤ Q_hi Δ (R_opt Δ) - Q_lo Δ (R_opt Δ) := by
-  sorry
-
-lemma lemma64 {Δₚ} (hc : c ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) :
-    |Q Δ c r - Q Δ c (Int.ceil (r / Δₚ) * Δₚ)| ≤ 1 - Q_lo Δ (Δ - Δₚ) := by
-  sorry
-
 private def f a r := a * r * log 2 - (a + 1) * log (a + 1) + (a + 1) * log (a * 2 ^ (-r) + 1)
 
 private lemma q_eq : Q Δ i r = f (2 ^ i) r / f (2 ^ i) Δ := by
@@ -56,6 +32,71 @@ private lemma q_eq : Q Δ i r = f (2 ^ i) r / f (2 ^ i) Δ := by
     exact rfl
   rw [eq]
   ring_nf
+
+lemma q_hi_denom_valid : 2 ^ (-Δ) + Δ * log 2 - 1 > 0 := by
+  let f x := 2 ^ (-x) + x * log 2 - 1
+  have df : ∀ x, HasDerivAt f (log 2 * (1 - 2 ^ (-x))) x := by
+    intro x
+    rw [(by ring : log 2 * (1 - 2 ^ (-x)) = (-1) * 2 ^ (-x) * log 2 + log 2)]
+    apply HasDerivAt.sub_const
+    apply HasDerivAt.add _ (hasDerivAt_mul_const _)
+    exact HasDerivAt.const_rpow zero_lt_two (hasDerivAt_neg _)
+  have f0 : f 0 = 0 := by simp
+  rw [← f0]
+  apply Convex.strictMonoOn_of_deriv_pos (convex_Ici 0)
+  · apply ContinuousAt.continuousOn
+    exact fun x _ => (df x).differentiableAt.continuousAt
+  · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi, gt_iff_lt]
+    intro x hx
+    rw [(df x).deriv]
+    apply mul_pos (log_pos one_lt_two)
+    rw [sub_pos]
+    apply rpow_lt_one_of_one_lt_of_neg one_lt_two
+    rwa [neg_lt, neg_zero]
+  · exact Set.left_mem_Ici
+  · exact Set.mem_Ici_of_Ioi delta_pos
+  · exact delta_pos
+
+/- Proof of Lemma 6.1 -/
+
+lemma tendsto_f_mul_inv_x : Tendsto (fun a => f a r * a⁻¹) (𝓝[≠] 0) (𝓝 (2 ^ (-r) + r * log 2 - 1)) := by
+  simp only [f, add_mul, sub_mul, mul_right_comm]
+  rw [(by norm_num; ring : 2 ^ (-r) + r * log 2 - 1 = 1 * (log 2 * r) - (1 * log (0 + 1) + 1) + (1 * log (0 * 2 ^ (-r) + 1) + 2 ^ (-r)))]
+  apply Tendsto.add
+  · apply Tendsto.sub
+    · simp only [mul_right_comm _ r, mul_assoc _ (log 2)]
+      exact Tendsto.mul_const _ tendsto_x_mul_inv_x
+    · apply Tendsto.add
+      · apply Tendsto.mul tendsto_x_mul_inv_x
+        apply tendsto_nhdsWithin_of_tendsto_nhds
+        apply ContinuousAt.tendsto
+        apply ContinuousAt.log _ (by norm_num)
+        exact Continuous.continuousAt (continuous_add_right 1)
+      · simpa [mul_comm] using tendsto_log_mul_inv_x 1
+  · apply Tendsto.add
+    · apply Tendsto.mul tendsto_x_mul_inv_x
+      apply tendsto_nhdsWithin_of_tendsto_nhds
+      apply ContinuousAt.tendsto
+      apply ContinuousAt.log _ (by norm_num)
+      apply Continuous.continuousAt
+      exact Continuous.add (continuous_mul_right _) continuous_const
+    · simpa [mul_comm] using tendsto_log_mul_inv_x (2 ^ (-r))
+
+lemma lemma61 : Tendsto (fun i => Q Δ i r) atBot (𝓝 (Q_hi Δ r)) := by
+  simp only [q_eq, Q_hi]
+  have : ∀ i : ℝ, f (2 ^ i) r / f (2 ^ i) Δ = f (2 ^ i) r * (2 ^ i)⁻¹ / (f (2 ^ i) Δ * (2 ^ i)⁻¹) := by
+    intro i; field_simp
+  simp only [this]; clear this
+  suffices h : ∀ r, Tendsto (fun i : ℝ => f (2 ^ i) r * (2 ^ i)⁻¹) atBot (𝓝 (2 ^ (-r) + r * log 2 - 1))
+  · exact Tendsto.div (h _) (h _) (ne_of_gt (q_hi_denom_valid delta_pos))
+  · intro r
+    apply Tendsto.comp tendsto_f_mul_inv_x
+    apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
+    · exact tendsto_rpow_atTop_of_base_gt_one _ one_lt_two
+    · simp; use 0; intro x _
+      exact ne_of_gt (rpow_pos_of_pos zero_lt_two _)
+
+/- Proof of Lemma 6.2 -/
 
 private lemma hasDerivAt_f (ha : a + 1 ≠ 0) (har : a * 2 ^ (-r) + 1 ≠ 0) :
     HasDerivAt (fun a => f a r)
@@ -80,30 +121,24 @@ private lemma hasDerivAt_f (ha : a + 1 ≠ 0) (har : a * 2 ^ (-r) + 1 ≠ 0) :
       · apply HasDerivAt.add_const
         exact hasDerivAt_mul_const _
       · exact har
-      -- apply ne_of_gt
-      --   apply add_pos_of_nonneg_of_pos _ zero_lt_one
-      --   apply mul_nonneg ha
-      --   exact rpow_nonneg_of_nonneg zero_le_two _
 
--- private lemma hasDeriv_f (ha : 0 ≤ a) :
---     deriv (fun a => f a r) 0 = 2 ^ (-r) + r * log 2 - 1 := by
 
-private lemma tendsto_f_0 :
-    Tendsto (fun a => f a r) (𝓝 0) (𝓝 0) := by
-  have h1 : Tendsto (fun a : ℝ => a + 1) (𝓝 0) (𝓝 1) := by
-    rw [(by norm_num : 𝓝 (1 : ℝ) = 𝓝 (0 + 1))]
-    exact Tendsto.add_const _ tendsto_id
-  rw (config := {occs := .pos [2]}) [(by norm_num : 𝓝 (0 : ℝ) = 𝓝 ((0 * (r * log 2) - 1 * log 1) + 1 * log 1))]
-  apply Tendsto.add
-  · apply Tendsto.sub
-    · simp only [mul_assoc]
-      exact Tendsto.mul_const _ tendsto_id
-    · exact Tendsto.mul h1 (Tendsto.log h1 one_ne_zero)
-  · apply Tendsto.mul h1
-    apply Tendsto.log _ one_ne_zero
-    rw [(by norm_num : 𝓝 (1 : ℝ) = 𝓝 (0 * 2 ^ (-r) + 1))]
-    exact Tendsto.add_const _ (Tendsto.mul_const _ tendsto_id)
+lemma lemma62 (hr1 : 0 ≤ r) (hr2 : r < Δ) : AntitoneOn (fun i => Q Δ i r) (Set.Iic 0) := by
+  sorry
 
-private lemma tendsto_deriv_f_0 :
-    Tendsto (deriv (fun a => f a r)) (𝓝 0) (𝓝 (2 ^ (-r) + r * log 2 - 1)) := by
+lemma q_lower_bound (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) : Q_lo Δ r ≤ Q Δ i r :=
+  lemma62 hr1 hr2 hi Set.right_mem_Iic hi
+
+lemma q_upper_bound (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) : Q Δ i r ≤ Q_hi Δ r := by
+  suffices h : ∀ᶠ (x : ℝ) in atBot, Q Δ i r ≤ Q Δ x r
+  · exact ge_of_tendsto (lemma61 delta_pos) h
+  · rw [eventually_atBot]
+    exact ⟨i, fun j ji => lemma62 hr1 hr2 (le_trans ji hi) hi ji⟩
+
+lemma lemma63 (hi : i ≤ 0) (hc : c ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) :
+    |Q Δ i r - Q Δ c r| ≤ Q_hi Δ (R_opt Δ) - Q_lo Δ (R_opt Δ) := by
+  sorry
+
+lemma lemma64 {Δₚ} (hc : c ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) :
+    |Q Δ c r - Q Δ c (Int.ceil (r / Δₚ) * Δₚ)| ≤ 1 - Q_lo Δ (Δ - Δₚ) := by
   sorry

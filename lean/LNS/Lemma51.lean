@@ -1,115 +1,9 @@
-import Mathlib.Analysis.SpecialFunctions.Log.Base
-import Mathlib.Analysis.SpecialFunctions.Log.Deriv
-import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
-import Mathlib.Analysis.Calculus.Deriv.Comp
-import Mathlib.Analysis.Calculus.Deriv.Shift
+import LNS.Common
+import LNS.Basic
 
--- TODO: generalize, simplify and add to Mathlib
-
-lemma DifferentiableAt.comp_linear {a b x : ℝ} {f : ℝ → ℝ} (ha : a ≠ 0) :
-    DifferentiableAt ℝ (fun x => f (a * x + b)) x ↔ DifferentiableAt ℝ f (a * x + b) := by
-  constructor <;> intro df
-  · have : f = (fun x => f (a * x + b)) ∘ (fun x => (x - b) / a) := by
-      ext y; congr; field_simp; ring
-    rw [this]
-    apply DifferentiableAt.comp
-    · rw [add_sub_cancel, mul_div_cancel_left _ ha]
-      exact df
-    · simp only [differentiableAt_id', differentiableAt_const, sub, div_const]
-  · rw [← Function.comp]
-    apply DifferentiableAt.comp
-    · exact df
-    · simp only [differentiableAt_add_const_iff]
-      exact DifferentiableAt.const_mul differentiableAt_id' _
-
-lemma deriv_comp_linear {a b x : ℝ} {f : ℝ → ℝ} :
-    deriv (fun x => f (a * x + b)) x = a * deriv f (a * x + b) := by
-  by_cases ha : a = 0; simp [ha]
-  by_cases df : DifferentiableAt ℝ f (a * x + b)
-  · rw [← Function.comp, deriv.comp, deriv_add_const, deriv_const_mul, deriv_id'', mul_comm, mul_one]
-    · exact differentiableAt_id'
-    · exact df
-    · apply DifferentiableAt.add_const
-      exact DifferentiableAt.const_mul differentiableAt_id' _
-  · rw [deriv_zero_of_not_differentiableAt df, deriv_zero_of_not_differentiableAt, mul_zero]
-    rw [DifferentiableAt.comp_linear ha]
-    exact df
-
-lemma DifferentiableAt.comp_const_sub {a x : ℝ} {f : ℝ → ℝ} :
-    DifferentiableAt ℝ (fun x => f (a - x)) x ↔ DifferentiableAt ℝ f (a - x) := by
-  have : ∀ x, a - x = (-1) * x + a := by intro; ring
-  simp only [this, DifferentiableAt.comp_linear (by norm_num : -1 ≠ (0 : ℝ))]
-
-lemma deriv_comp_const_sub {a x : ℝ} {f : ℝ → ℝ} :
-    deriv (fun x => f (a - x)) x = -(deriv f (a - x)) := by
-  have : ∀ x, a - x = (-1) * x + a := by intro; ring
-  simp only [this, deriv_comp_linear]
-  rw [neg_one_mul]
-
-lemma DifferentiableAt.comp_sub_const {a x : ℝ} {f : ℝ → ℝ} :
-    DifferentiableAt ℝ (fun x => f (x - a)) x ↔ DifferentiableAt ℝ f (x - a) := by
-  have : ∀ x, x - a = 1 * x + -a := by intro; ring
-  simp only [this, DifferentiableAt.comp_linear (by norm_num : 1 ≠ (0 : ℝ))]
-
-lemma deriv_comp_sub_const {a x : ℝ} {f : ℝ → ℝ} :
-    deriv (fun x => f (x - a)) x = deriv f (x - a) := by
-  have : ∀ x, x - a = 1 * x + -a := by intro; ring
-  simp only [this, deriv_comp_linear]
-  rw [one_mul]
-
-
-/- Definitions of Φ⁺(x) and E(i, r) -/
+namespace LNS
 
 open Real
-
-noncomputable def Φ (x : ℝ) := logb 2 (1 + (2 : ℝ) ^ x)
-
-noncomputable def E i r := Φ (i - r) - Φ i + r * deriv Φ i
-
-lemma err_eq_zero : E i 0 = 0 := by simp [E]
-
-/- Derivatives and differentiability of Φ -/
-
-lemma hasDerivAt_two_pow (x : ℝ) : HasDerivAt (fun x => (2 : ℝ) ^ x) ((2 : ℝ) ^ x * log 2) x := by
-  rw [(by ring : (2 : ℝ) ^ x * log 2 = 0 * x * (2 : ℝ) ^ (x - 1) + 1 * (2 : ℝ) ^ x * log 2)]
-  exact HasDerivAt.rpow (hasDerivAt_const x 2) (hasDerivAt_id' x) two_pos
-
-lemma deriv_two_pow (x : ℝ) : deriv (fun x => (2 : ℝ) ^ x) x = (2 : ℝ) ^ x * log 2 :=
-  HasDerivAt.deriv (hasDerivAt_two_pow x)
-
-lemma ineq0 (x : ℝ) : 0 < 1 + (2 : ℝ) ^ x := by
-  linarith [rpow_pos_of_pos two_pos x]
-
-lemma ineq1 (x : ℝ) : 1 + (2 : ℝ) ^ x ≠ 0 := by
-  linarith [rpow_pos_of_pos two_pos x]
-
-lemma diff_aux1 : Differentiable ℝ (fun (x : ℝ) => 1 + (2 : ℝ) ^ x) := by
-  apply Differentiable.const_add
-  apply Differentiable.rpow <;> simp
-
-lemma diff_aux2 : Differentiable ℝ (fun (x : ℝ) => log (1 + (2 : ℝ) ^ x)) := by
-  apply Differentiable.log diff_aux1
-  exact ineq1
-
-lemma differentiable_phi : Differentiable ℝ Φ :=
-  Differentiable.div_const diff_aux2 _
-
-lemma deriv_phi : deriv Φ = fun (x : ℝ) => (2 : ℝ) ^ x / (1 + (2 : ℝ) ^ x) := by
-  unfold Φ logb
-  ext x; simp
-  rw [deriv.log, deriv_const_add, deriv_two_pow]
-  · field_simp; ring
-  · apply DifferentiableAt.const_add
-    apply DifferentiableAt.rpow _ differentiableAt_id' <;> simp
-  · exact ineq1 _
-
-lemma deriv_phi2 : deriv (deriv Φ) x = (2 : ℝ) ^ x * log 2 / (1 + (2 : ℝ) ^ x) ^ 2 := by
-  simp [deriv_phi]
-  rw [deriv_div]
-  · simp [deriv_two_pow]; ring
-  · apply (hasDerivAt_two_pow x).differentiableAt
-  · simp [(hasDerivAt_two_pow x).differentiableAt]
-  · exact ineq1 x
 
 /- E(i, r) is strictly monotone on r ≥ 0 for all fixed i -/
 
@@ -129,7 +23,7 @@ lemma strictMonoOn_E_r {i} : StrictMonoOn (E i) (Set.Ici 0) := by
     rw [deriv_add]
     · rw [deriv_mul_const (by simp : _), deriv_sub_const, deriv_id'', deriv_comp_const_sub, one_mul]
       simp only [deriv_phi, lt_neg_add_iff_add_lt, add_zero]
-      rw [div_lt_div_iff (ineq0 _) (ineq0 _)]
+      rw [div_lt_div_iff (one_plus_two_pow_pos _) (one_plus_two_pow_pos _)]
       rw [← lt_neg_add_iff_lt]; ring_nf
       rw [lt_neg_add_iff_lt]
       apply Real.rpow_lt_rpow_of_exponent_lt (by norm_num : _)
@@ -230,7 +124,7 @@ lemma strictMonoOn_E_i {r} (hr : 0 < r) : StrictMonoOn (fun i => E i r) (Set.Iic
   have diff2 : Differentiable ℝ fun y ↦ Φ (y - r) - Φ y := Differentiable.sub diff1 differentiable_phi
   have diff3 : Differentiable ℝ (deriv Φ) := by
     rw [deriv_phi]
-    apply Differentiable.div _ diff_aux1 ineq1
+    apply Differentiable.div _ diff_aux1 one_plus_two_pow_ne_zero
     exact fun x => (hasDerivAt_two_pow x).differentiableAt
   have diff4 : Differentiable ℝ (fun y ↦ r * deriv Φ y) := Differentiable.const_mul diff3 _
   have diffE : Differentiable ℝ (fun i => E i r) := Differentiable.add diff2 diff4
@@ -247,7 +141,7 @@ lemma strictMonoOn_E_i {r} (hr : 0 < r) : StrictMonoOn (fun i => E i r) (Set.Iic
     field_simp
     set x := (2 : ℝ) ^ (-r)
     set y := (2 : ℝ) ^ i
-    have ypos1 : 0 < 1 + y := ineq0 i
+    have ypos1 : 0 < 1 + y := one_plus_two_pow_pos i
     apply div_pos
     · have : (x * y * (1 + y) - (1 + x * y) * y) * (1 + y) ^ 2 + r * (y * log 2) * ((1 + x * y) * (1 + y)) =
              (1 + y) * y * (y * (r * log 2 * x + x - 1) + (x + r * log 2 - 1)) := by ring
@@ -276,7 +170,7 @@ lemma strictMonoOn_E_i {r} (hr : 0 < r) : StrictMonoOn (fun i => E i r) (Set.Iic
       · exact rpow_lt_one_of_one_lt_of_neg one_lt_two i_neg
     · apply mul_pos (mul_pos _ ypos1) (pow_pos ypos1 2)
       rw [← rpow_add two_pos]
-      exact ineq0 _
+      exact one_plus_two_pow_pos _
 
 lemma monotoneOn_E_i {r} (hr : 0 ≤ r) : MonotoneOn (fun i => E i r) (Set.Iic 0) := by
   rcases lt_or_eq_of_le hr with h | h
@@ -291,3 +185,5 @@ lemma err_bound {i r Δ} (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r ≤ Δ) : |E i 
   have := monotoneOn_E_i hr1 hi Set.right_mem_Iic hi
   apply le_trans this
   exact monotoneOn_E_r hr1 (le_trans hr1 hr2) hr2
+
+end LNS

@@ -1,5 +1,6 @@
 import LNS.Common
 import LNS.Basic
+import LNS.Tactic
 
 noncomputable section
 
@@ -37,11 +38,11 @@ lemma q_hi_denom_valid : 2 ^ (-Δ) + Δ * log 2 - 1 > 0 := by
   let f x := 2 ^ (-x) + x * log 2 - 1
   have df : ∀ x, HasDerivAt f (log 2 * (1 - 2 ^ (-x))) x := by
     intro x
-    rw [(by ring : log 2 * (1 - 2 ^ (-x)) = log 2 * (-1) * 2 ^ (-x) + log 2)]
-    apply HasDerivAt.sub_const
-    apply HasDerivAt.add _ (hasDerivAt_mul_const _)
-    -- have := HasDerivAt.const_rpow zero_lt_two
-    exact HasDerivAt.const_rpow zero_lt_two (hasDerivAt_neg _)
+    get_deriv (fun x => 2 ^ (-x) + x * log 2 - 1) at x
+    · simp [toFun]
+    · simp [toFun] at h
+      convert h using 1
+      ring
   have f0 : f 0 = 0 := by simp
   rw [← f0]
   apply Convex.strictMonoOn_of_deriv_pos (convex_Ici 0)
@@ -103,25 +104,31 @@ private lemma hasDerivAt_f (ha : a + 1 ≠ 0) (har : a * 2 ^ (-r) + 1 ≠ 0) :
     HasDerivAt (fun a => f a r)
       (r * log 2 - (log (a + 1) + 1) +
         (log (a * 2 ^ (-r) + 1) + (a + 1) * (2 ^ (-r) / (a * 2 ^ (-r) + 1)))) a := by
-  apply HasDerivAt.add
-  · apply HasDerivAt.sub
-    · simp only [mul_assoc]
-      exact hasDerivAt_mul_const (r * log 2)
-    · have : log (a + 1) + 1 = 1 * log (a + 1) + (a + 1) * (1 / (a + 1)) := by
-        field_simp
-      rw [this]
-      apply HasDerivAt.mul
-      · exact HasDerivAt.add_const (hasDerivAt_id' _) _
-      apply HasDerivAt.log
-      · exact HasDerivAt.add_const (hasDerivAt_id' _) _
-      · exact ha
-  · rw [← one_mul (log (a * 2 ^ (-r) + 1))]
-    apply HasDerivAt.mul
-    · exact HasDerivAt.add_const (hasDerivAt_id' _) _
-    · apply HasDerivAt.log
-      · apply HasDerivAt.add_const
-        exact hasDerivAt_mul_const _
-      · exact har
+  get_deriv (fun a => a * r * log 2 - (a + 1) * log (a + 1) + (a + 1) * log (a * 2 ^ (-r) + 1)
+) at a
+  · simp [toFun, ha, har]
+  · simp [toFun] at h
+    convert h using 1
+    field_simp
+  -- apply HasDerivAt.add
+  -- · apply HasDerivAt.sub
+  --   · simp only [mul_assoc]
+  --     exact hasDerivAt_mul_const (r * log 2)
+  --   · have : log (a + 1) + 1 = 1 * log (a + 1) + (a + 1) * (1 / (a + 1)) := by
+  --       field_simp
+  --     rw [this]
+  --     apply HasDerivAt.mul
+  --     · exact HasDerivAt.add_const (hasDerivAt_id' _) _
+  --     apply HasDerivAt.log
+  --     · exact HasDerivAt.add_const (hasDerivAt_id' _) _
+  --     · exact ha
+  -- · rw [← one_mul (log (a * 2 ^ (-r) + 1))]
+  --   apply HasDerivAt.mul
+  --   · exact HasDerivAt.add_const (hasDerivAt_id' _) _
+  --   · apply HasDerivAt.log
+  --     · apply HasDerivAt.add_const
+  --       exact hasDerivAt_mul_const _
+  --     · exact har
 
 
 lemma lemma62 (hr1 : 0 ≤ r) (hr2 : r < Δ) : AntitoneOn (fun i => Q Δ i r) (Set.Iic 0) := by

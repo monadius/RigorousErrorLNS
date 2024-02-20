@@ -7,6 +7,11 @@ import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 
 -- TODO: generalize, simplify and add to Mathlib
 
+lemma List.forall_append {α : Type u} (xs ys : List α) (p : α → Prop) :
+    (xs ++ ys).Forall p ↔ xs.Forall p ∧ ys.Forall p := by
+  repeat rw [List.forall_iff_forall_mem]
+  rw [List.forall_mem_append]
+
 /- Derivatives for compositions with a linear transformation -/
 
 lemma DifferentiableAt.comp_linear {a b x : ℝ} {f : ℝ → ℝ} (ha : a ≠ 0) :
@@ -66,10 +71,16 @@ section Derivatives
 
 open Real
 
+-- lemma HasDerivAt.const_rpow {f : ℝ → ℝ} {f' a : ℝ} (ha : 0 < a) (hf : HasDerivAt f f' x) :
+--     HasDerivAt (fun x => a ^ f x) (f' * a ^ f x * Real.log a) x := by
+--   rw [(by norm_num : f' * a ^ f x * Real.log a = 0 * f x * a ^ (f x - 1) + f' * a ^ f x * Real.log a)]
+--   exact HasDerivAt.rpow (hasDerivAt_const x a) hf ha
+
 lemma HasDerivAt.const_rpow {f : ℝ → ℝ} {f' a : ℝ} (ha : 0 < a) (hf : HasDerivAt f f' x) :
-    HasDerivAt (fun x => a ^ f x) (f' * a ^ f x * Real.log a) x := by
-  rw [(by norm_num : f' * a ^ f x * Real.log a = 0 * f x * a ^ (f x - 1) + f' * a ^ f x * Real.log a)]
+    HasDerivAt (fun x => a ^ f x) ((Real.log a * f') * a ^ f x) x := by
+  rw [(by norm_num; ring : (Real.log a * f') * a ^ f x = 0 * f x * a ^ (f x - 1) + f' * a ^ f x * Real.log a)]
   exact HasDerivAt.rpow (hasDerivAt_const x a) hf ha
+
 
 end Derivatives
 

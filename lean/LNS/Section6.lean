@@ -37,9 +37,10 @@ lemma q_hi_denom_valid : 2 ^ (-Δ) + Δ * log 2 - 1 > 0 := by
   let f x := 2 ^ (-x) + x * log 2 - 1
   have df : ∀ x, HasDerivAt f (log 2 * (1 - 2 ^ (-x))) x := by
     intro x
-    rw [(by ring : log 2 * (1 - 2 ^ (-x)) = (-1) * 2 ^ (-x) * log 2 + log 2)]
+    rw [(by ring : log 2 * (1 - 2 ^ (-x)) = log 2 * (-1) * 2 ^ (-x) + log 2)]
     apply HasDerivAt.sub_const
     apply HasDerivAt.add _ (hasDerivAt_mul_const _)
+    -- have := HasDerivAt.const_rpow zero_lt_two
     exact HasDerivAt.const_rpow zero_lt_two (hasDerivAt_neg _)
   have f0 : f 0 = 0 := by simp
   rw [← f0]

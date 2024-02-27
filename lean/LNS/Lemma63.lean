@@ -28,7 +28,7 @@ def A X := (B X) - X*(T X)
 def Root X := - (B X/ A X)
 
 
-lemma F_eq :  F  (2^Δ) (2^r) = Q_hi Δ r - Q_lo Δ r := by
+lemma F_eq_Q :  F  (2^Δ) (2^r) = Q_hi Δ r - Q_lo Δ r := by
   have e11: 1/(2:ℝ)^r = 2^(-r) :=by
       field_simp;
       have e111: (2:ℝ) ^ (-r) * 2 ^ r = 1 :=by
@@ -89,7 +89,7 @@ lemma F_eq :  F  (2^Δ) (2^r) = Q_hi Δ r - Q_lo Δ r := by
   unfold F; rw[e1,e2]
 
 
-lemma Root_eq : logb 2 (Root (2^Δ)) = R_opt Δ :=by
+lemma Root_eq_t : logb 2 (Root (2^Δ)) = R_opt Δ :=by
   unfold R_opt;
   simp;
   unfold Root
@@ -104,6 +104,7 @@ lemma Root_eq : logb 2 (Root (2^Δ)) = R_opt Δ :=by
   rw[e2]
   have e3: -(B X / A X) = -B X / A X :=by field_simp;
   rw[e3]
+
 
 
 
@@ -576,9 +577,24 @@ lemma main (hr: R > 1) (hxr: R < X) :  F X R ≤ F X (Root X) := by
   exact secondhalf hr2
 
 
+lemma Root_eq_R_opt (hΔ : Δ >0):  2^(R_opt Δ) = Root (2^Δ)  :=by
+  rw[← Root_eq_t]
+  apply rpow_logb;
+  linarith; linarith;
+  have : Root (2 ^ Δ) > 1 := by
+    apply Root_gt_1; apply one_lt_rpow
+    any_goals linarith;
+  linarith
 
-
-lemma lemma63 (hr: r > 0) (hxr: r < Δ) :  F (2^Δ) (2^r) ≤ F (2^Δ) (Root (2^Δ)) := by
+lemma lemma63sub (hr: r > 0) (hxr: r < Δ) :  F (2^Δ) (2^r) ≤ F (2^Δ) (Root (2^Δ)) := by
   apply main
   apply one_lt_pow; linarith; linarith
   apply pow_right_strictMono; linarith; assumption
+
+
+lemma lemma63sub2  (hr1 : 0 < r) (hr2 : r < Δ) :
+    Q_hi Δ r - Q_lo Δ r ≤ Q_hi Δ (R_opt Δ) - Q_lo Δ (R_opt Δ) := by
+  rw[← F_eq_Q, ← F_eq_Q , Root_eq_R_opt]
+  apply main
+  apply one_lt_rpow; linarith; linarith
+  apply rpow_lt_rpow_of_exponent_lt; linarith; assumption; linarith;

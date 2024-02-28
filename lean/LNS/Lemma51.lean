@@ -186,4 +186,42 @@ lemma err_bound {i r Δ} (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r ≤ Δ) : |E i 
   apply le_trans this
   exact monotoneOn_E_r hr1 (le_trans hr1 hr2) hr2
 
+
+/- Theorem 5.3 -/
+variable (rnd : ℝ → ℝ)
+
+variable (ε  : ℝ)
+
+variable (hrnd : ∀ x , |x - rnd x| ≤ ε)
+
+noncomputable def Efix (i r : ℝ) := Φ (i - r) - rnd (Φ i) + rnd (r * rnd (deriv Φ i) )
+
+
+lemma Theorem53 {i r Δ} (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r ≤ Δ) :  |Efix rnd i r| ≤ (E 0 Δ) + (2+Δ)*ε :=by
+  set s1 := (Φ i -  rnd (Φ i))
+  set s2 := r*(rnd (deriv Φ i) - deriv Φ i)
+  set s3 := (rnd (r * rnd (deriv Φ i)) - r * rnd (deriv Φ i))
+  have e1: Efix rnd i r = E i r + s1 + s2 + s3 := by unfold Efix E; ring_nf
+  have i1: |s1| ≤ ε := by apply hrnd
+  have i3: |s3| ≤ ε := by
+    have : |s3| = |r * rnd (deriv Φ i) - rnd (r * rnd (deriv Φ i))| :=by apply abs_sub_comm;
+    rw[this]
+    apply hrnd
+  have i2: |s2| ≤ Δ*ε :=by
+    have e1: |s2| = |r| * |(rnd (deriv Φ i) - deriv Φ i)| :=by apply abs_mul
+    have e2: |(rnd (deriv Φ i) - deriv Φ i)| = |(deriv Φ i) - rnd (deriv Φ i)|:= by apply abs_sub_comm;
+    have e3: |r| = r :=by apply abs_of_nonneg; linarith
+    rw[e1,e2,e3]
+    have i21: |deriv Φ i - rnd (deriv Φ i)| ≤ ε := by apply hrnd
+    apply mul_le_mul hr2 i21; simp; linarith
+  have i0:  |Efix rnd i r| ≤ |E i r| + |s1| + |s2| + |s3| :=by
+    have i01 : |Efix rnd i r| ≤ |E i r + s1 + s2| + |s3|:=by rw[e1]; apply abs_add
+    have i02 :  |E i r + s1 + s2|  ≤    |E i r + s1| + |s2|:=by  apply abs_add
+    have i03: |E i r + s1|  ≤ |E i r| + |s1| :=by  apply abs_add
+    linarith
+  have i01: |E i r|≤ E 0 Δ :=by exact err_bound hi hr1 hr2
+  linarith
+
+
+
 end LNS

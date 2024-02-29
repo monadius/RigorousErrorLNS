@@ -905,6 +905,53 @@ lemma q_hi_denom_valid : 2 ^ (-Δ) + Δ * log 2 - 1 > 0 := by
   · exact Set.mem_Ici_of_Ioi delta_pos
   · exact delta_pos
 
+private lemma hasDerivAt_f (ha : a + 1 ≠ 0) (har : a * 2 ^ (-r) + 1 ≠ 0) :
+    HasDerivAt (fun a => f a r)
+      (r * log 2 - (log (a + 1) + 1) +
+        (log (a * 2 ^ (-r) + 1) + (a + 1) * (2 ^ (-r) / (a * 2 ^ (-r) + 1)))) a := by
+  apply HasDerivAt.add
+  · apply HasDerivAt.sub
+    · simp only [mul_assoc]
+      exact hasDerivAt_mul_const (r * log 2)
+    · have : log (a + 1) + 1 = 1 * log (a + 1) + (a + 1) * (1 / (a + 1)) := by
+        field_simp
+      rw [this]
+      apply HasDerivAt.mul
+      · exact HasDerivAt.add_const (hasDerivAt_id' _) _
+      apply HasDerivAt.log
+      · exact HasDerivAt.add_const (hasDerivAt_id' _) _
+      · exact ha
+  · rw [← one_mul (log (a * 2 ^ (-r) + 1))]
+    apply HasDerivAt.mul
+    · exact HasDerivAt.add_const (hasDerivAt_id' _) _
+    · apply HasDerivAt.log
+      · apply HasDerivAt.add_const
+        exact hasDerivAt_mul_const _
+      · exact har
+
+lemma dfh (r:ℝ) : Differentiable ℝ (fun i ↦ h r i ):=by
+    unfold h
+    unfold f
+    apply Differentiable.add
+    apply Differentiable.sub
+    any_goals apply Differentiable.mul
+    any_goals apply Differentiable.log
+    any_goals apply Differentiable.add
+    any_goals apply Differentiable.mul
+    any_goals apply Differentiable.rpow
+    any_goals simp;
+    any_goals intro x
+    have ie: (2:ℝ)^x > 0:= by apply rpow_pos_of_pos; linarith
+    linarith
+    have ie: (2:ℝ)^x > 0:= by apply rpow_pos_of_pos; linarith
+    have ie1: (2:ℝ)^(-r) > 0:= by apply rpow_pos_of_pos; linarith
+    have ie2: (2:ℝ) ^ x * 2 ^ (-r) >0 :=by apply mul_pos; linarith; linarith;
+    linarith
+
+
+
+
+
 /-SUPPORTING 6.3******************************************************************************* -/
 
 def T X := 1/X + log X -1
@@ -1832,51 +1879,6 @@ lemma lemma61 : Tendsto (fun i => Q Δ i r) atBot (𝓝 (Q_hi Δ r)) := by
       exact ne_of_gt (rpow_pos_of_pos zero_lt_two _)
 
 /- Proof of Lemma 6.2 -/
-
-private lemma hasDerivAt_f (ha : a + 1 ≠ 0) (har : a * 2 ^ (-r) + 1 ≠ 0) :
-    HasDerivAt (fun a => f a r)
-      (r * log 2 - (log (a + 1) + 1) +
-        (log (a * 2 ^ (-r) + 1) + (a + 1) * (2 ^ (-r) / (a * 2 ^ (-r) + 1)))) a := by
-  apply HasDerivAt.add
-  · apply HasDerivAt.sub
-    · simp only [mul_assoc]
-      exact hasDerivAt_mul_const (r * log 2)
-    · have : log (a + 1) + 1 = 1 * log (a + 1) + (a + 1) * (1 / (a + 1)) := by
-        field_simp
-      rw [this]
-      apply HasDerivAt.mul
-      · exact HasDerivAt.add_const (hasDerivAt_id' _) _
-      apply HasDerivAt.log
-      · exact HasDerivAt.add_const (hasDerivAt_id' _) _
-      · exact ha
-  · rw [← one_mul (log (a * 2 ^ (-r) + 1))]
-    apply HasDerivAt.mul
-    · exact HasDerivAt.add_const (hasDerivAt_id' _) _
-    · apply HasDerivAt.log
-      · apply HasDerivAt.add_const
-        exact hasDerivAt_mul_const _
-      · exact har
-
-lemma dfh (r:ℝ) : Differentiable ℝ (fun i ↦ h r i ):=by
-    unfold h
-    unfold f
-    apply Differentiable.add
-    apply Differentiable.sub
-    any_goals apply Differentiable.mul
-    any_goals apply Differentiable.log
-    any_goals apply Differentiable.add
-    any_goals apply Differentiable.mul
-    any_goals apply Differentiable.rpow
-    any_goals simp;
-    any_goals intro x
-    have ie: (2:ℝ)^x > 0:= by apply rpow_pos_of_pos; linarith
-    linarith
-    have ie: (2:ℝ)^x > 0:= by apply rpow_pos_of_pos; linarith
-    have ie1: (2:ℝ)^(-r) > 0:= by apply rpow_pos_of_pos; linarith
-    have ie2: (2:ℝ) ^ x * 2 ^ (-r) >0 :=by apply mul_pos; linarith; linarith;
-    linarith
-
-
 
 
 lemma lemma62 (hr1 : 0 < r) (hr2 : r < Δ) : AntitoneOn (fun i => Q Δ i r) (Set.Iic 0) := by

@@ -188,6 +188,7 @@ lemma err_bound {i r Δ} (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r ≤ Δ) : |E i 
 
 
 /- Theorem 5.3 -/
+
 variable (rnd : ℝ → ℝ)
 
 variable (ε  : ℝ)
@@ -195,7 +196,6 @@ variable (ε  : ℝ)
 variable (hrnd : ∀ x , |x - rnd x| ≤ ε)
 
 noncomputable def Efix (i r : ℝ) := Φ (i - r) - rnd (Φ i) + rnd (r * rnd (deriv Φ i) )
-
 
 lemma Theorem53 {i r Δ} (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r ≤ Δ) :  |Efix rnd i r| ≤ (E 0 Δ) + (2+Δ)*ε :=by
   set s1 := (Φ i -  rnd (Φ i))

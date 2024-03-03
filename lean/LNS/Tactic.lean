@@ -1,4 +1,5 @@
 import LNS.Common
+import Mathlib.Analysis.Calculus.Deriv.Inv
 
 noncomputable section
 

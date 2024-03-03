@@ -25,8 +25,7 @@ private lemma q_eq : Q Δ i r = f (2 ^ i) r / f (2 ^ i) Δ := by
   simp only [Q, E, deriv_phi, Φ, logb]
   field_simp
   let g := fun r => ((log (1 + 2 ^ (i - r)) - log (1 + 2 ^ i)) * (1 + 2 ^ i) + r * 2 ^ i * log 2)
-  suffices h : ∀ r, g r = f (2 ^ i) r
-  · rw [← h, ←h]
+  suffices h : ∀ r, g r = f (2 ^ i) r by rw [← h, ←h]
   intro r; simp only [g, f]
   have eq : (2 : ℝ) ^ (i - r) = 2 ^ i * 2 ^ (-r) := by
     rw [rpow_sub zero_lt_two, rpow_neg zero_le_two]
@@ -45,7 +44,7 @@ lemma q_hi_denom_valid : 2 ^ (-Δ) + Δ * log 2 - 1 > 0 := by
       ring
   have f0 : f 0 = 0 := by simp
   rw [← f0]
-  apply Convex.strictMonoOn_of_deriv_pos (convex_Ici 0)
+  apply strictMonoOn_of_deriv_pos (convex_Ici 0)
   · apply ContinuousAt.continuousOn
     exact fun x _ => (df x).differentiableAt.continuousAt
   · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi, gt_iff_lt]
@@ -89,14 +88,14 @@ lemma lemma61 : Tendsto (fun i => Q Δ i r) atBot (𝓝 (Q_hi Δ r)) := by
   have : ∀ i : ℝ, f (2 ^ i) r / f (2 ^ i) Δ = f (2 ^ i) r * (2 ^ i)⁻¹ / (f (2 ^ i) Δ * (2 ^ i)⁻¹) := by
     intro i; field_simp
   simp only [this]; clear this
-  suffices h : ∀ r, Tendsto (fun i : ℝ => f (2 ^ i) r * (2 ^ i)⁻¹) atBot (𝓝 (2 ^ (-r) + r * log 2 - 1))
-  · exact Tendsto.div (h _) (h _) (ne_of_gt (q_hi_denom_valid delta_pos))
-  · intro r
-    apply Tendsto.comp tendsto_f_mul_inv_x
-    apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
-    · exact tendsto_rpow_atTop_of_base_gt_one _ one_lt_two
-    · simp; use 0; intro x _
-      exact ne_of_gt (rpow_pos_of_pos zero_lt_two _)
+  suffices h : ∀ r, Tendsto (fun i : ℝ => f (2 ^ i) r * (2 ^ i)⁻¹) atBot (𝓝 (2 ^ (-r) + r * log 2 - 1)) by
+    exact Tendsto.div (h _) (h _) (ne_of_gt (q_hi_denom_valid delta_pos))
+  intro r
+  apply Tendsto.comp tendsto_f_mul_inv_x
+  apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
+  · exact tendsto_rpow_atTop_of_base_gt_one _ one_lt_two
+  · simp; use 0; intro x _
+    exact ne_of_gt (rpow_pos_of_pos zero_lt_two _)
 
 /- Proof of Lemma 6.2 -/
 
@@ -138,10 +137,10 @@ lemma q_lower_bound (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) : Q_lo Δ r �
   lemma62 hr1 hr2 hi Set.right_mem_Iic hi
 
 lemma q_upper_bound (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) : Q Δ i r ≤ Q_hi Δ r := by
-  suffices h : ∀ᶠ (x : ℝ) in atBot, Q Δ i r ≤ Q Δ x r
-  · exact ge_of_tendsto (lemma61 delta_pos) h
-  · rw [eventually_atBot]
-    exact ⟨i, fun j ji => lemma62 hr1 hr2 (le_trans ji hi) hi ji⟩
+  suffices h : ∀ᶠ (x : ℝ) in atBot, Q Δ i r ≤ Q Δ x r by
+    exact ge_of_tendsto (lemma61 delta_pos) h
+  rw [eventually_atBot]
+  exact ⟨i, fun j ji => lemma62 hr1 hr2 (le_trans ji hi) hi ji⟩
 
 lemma lemma63 (hi : i ≤ 0) (hc : c ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) :
     |Q Δ i r - Q Δ c r| ≤ Q_hi Δ (R_opt Δ) - Q_lo Δ (R_opt Δ) := by

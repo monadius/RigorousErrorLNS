@@ -1,4 +1,5 @@
 import Mathlib.Analysis.SpecialFunctions.Log.Base
+import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import LNS.Common

@@ -15,7 +15,7 @@ lemma strictMonoOn_E_r {i} : StrictMonoOn (E i) (Set.Ici 0) := by
     intro x
     apply DifferentiableAt.comp_const_sub.mpr
     apply differentiable_phi
-  apply Convex.strictMonoOn_of_deriv_pos (convex_Ici (0 : ℝ))
+  apply strictMonoOn_of_deriv_pos (convex_Ici (0 : ℝ))
   · apply Continuous.continuousOn
     exact Differentiable.continuous diffE
   · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi]
@@ -66,13 +66,13 @@ private lemma f_zero : f 0 = 0 := by simp [f]
 private lemma f_neg {a} (ha : a ≠ 0) : f a < 0 := by
   rw [← f_zero]
   rcases lt_or_gt_of_ne ha with h | h
-  · apply Convex.strictMonoOn_of_deriv_pos (convex_Iic 0) _ _ (Set.mem_Iic_of_Iio h) Set.right_mem_Iic h
+  · apply strictMonoOn_of_deriv_pos (convex_Iic 0) _ _ (Set.mem_Iic_of_Iio h) Set.right_mem_Iic h
     · apply Continuous.continuousOn
       exact Differentiable.continuous differentiable_f
     · simp only [Set.nonempty_Ioi, interior_Iic', Set.mem_Iio, hasDerivAt_f.deriv]
       intro x x_neg
       exact mul_pos (neg_pos.mpr x_neg) (exp_pos _)
-  · apply Convex.strictAntiOn_of_deriv_neg (convex_Ici 0) _ _ Set.left_mem_Ici (Set.mem_Ici_of_Ioi h) h
+  · apply strictAntiOn_of_deriv_neg (convex_Ici 0) _ _ Set.left_mem_Ici (Set.mem_Ici_of_Ioi h) h
     · apply Continuous.continuousOn
       exact Differentiable.continuous differentiable_f
     · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi, hasDerivAt_f.deriv]
@@ -88,7 +88,7 @@ private lemma h_nonneg (ha : 0 ≤ a) : 0 ≤ h a := by
   have h0 : h 0 = 0 := by
     simp only [h, zero_add, neg_zero, exp_zero, mul_one, zero_sub, add_right_neg]
   rw [← h0]
-  apply Convex.monotoneOn_of_deriv_nonneg (convex_Ici 0)
+  apply monotoneOn_of_deriv_nonneg (convex_Ici 0)
   · apply Continuous.continuousOn
     exact Differentiable.continuous dh
   · exact Differentiable.differentiableOn dh
@@ -135,7 +135,7 @@ lemma strictMonoOn_E_i {r} (hr : 0 < r) : StrictMonoOn (fun i => E i r) (Set.Iic
     exact fun x => (hasDerivAt_two_pow x).differentiableAt
   have diff4 : Differentiable ℝ (fun y ↦ r * deriv Φ y) := Differentiable.const_mul diff3 _
   have diffE : Differentiable ℝ (fun i => E i r) := Differentiable.add diff2 diff4
-  apply Convex.strictMonoOn_of_deriv_pos (convex_Iic 0)
+  apply strictMonoOn_of_deriv_pos (convex_Iic 0)
   · apply Continuous.continuousOn
     exact Differentiable.continuous diffE
   · simp only [Set.nonempty_Ioi, interior_Iic', Set.mem_Iio]
@@ -167,12 +167,12 @@ lemma strictMonoOn_E_i {r} (hr : 0 < r) : StrictMonoOn (fun i => E i r) (Set.Iic
         rw [← h1]
         exact h_nonneg (le_of_lt a_pos)
       apply lt_of_le_of_lt this
-      apply Convex.strictAntiOn_of_deriv_neg (convex_Ici 0)
+      apply strictAntiOn_of_deriv_neg (convex_Ici 0)
       · apply Continuous.continuousOn
         apply Continuous.add (continuous_mul_right _) continuous_const
       · simp; intro x _
         exact f_neg (ne_of_gt a_pos)
-      · simp [rpow_nonneg_of_nonneg (le_of_lt two_pos)]
+      · simp [rpow_nonneg (le_of_lt two_pos)]
       · simp only [Set.mem_Ici, zero_le_one]
       · exact rpow_lt_one_of_one_lt_of_neg one_lt_two i_neg
     · apply mul_pos (mul_pos _ ypos1) (pow_pos ypos1 2)

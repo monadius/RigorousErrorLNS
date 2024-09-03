@@ -41,7 +41,7 @@ lemma Φₜ_error : Φ x - Φₜ Δ x = E (Iₓ Δ x) (Rₓ Δ x) := by
   simp only [Φₜ, E, i_sub_r_eq_x]; ring
 
 lemma x_le_ix {Δ} (hd : 0 < Δ) x : x ≤ Iₓ Δ x :=
-  (div_le_iff hd).mp $ Int.le_ceil $ x / Δ
+  (div_le_iff₀ hd).mp $ Int.le_ceil $ x / Δ
 
 lemma x_neg_iff_ix_neg {Δ} (hd : 0 < Δ) x : x ≤ 0 ↔ Iₓ Δ x ≤ 0 := by
   constructor
@@ -59,7 +59,7 @@ lemma rx_eq_fract {Δ x : ℝ} (hd : Δ ≠ 0) (ix : Iₓ Δ x ≠ x) :
   unfold Rₓ Iₓ at *
   rcases Int.fract_eq_zero_or_add_one_sub_ceil (x / Δ) with h | h
   · exfalso; apply ix
-    rw [Int.ceil_eq_self.mpr h, div_mul_cancel _ hd]
+    rw [Int.ceil_eq_self.mpr h, div_mul_cancel₀ _ hd]
   · rw [h]; field_simp; ring
 
 lemma rx_nonneg {Δ} (hd : 0 < Δ) x : 0 ≤ Rₓ Δ x :=
@@ -91,6 +91,7 @@ lemma diff_aux2 : Differentiable ℝ (fun (x : ℝ) => log (1 + (2 : ℝ) ^ x)) 
   apply Differentiable.log diff_aux1
   exact one_plus_two_pow_ne_zero
 
+@[fun_prop]
 lemma differentiable_phi : Differentiable ℝ Φ :=
   Differentiable.div_const diff_aux2 _
 

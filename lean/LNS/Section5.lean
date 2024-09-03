@@ -9,15 +9,8 @@ open Real
 /- E(i, r) is strictly monotone on r ≥ 0 for all fixed i -/
 
 lemma strictMonoOn_E_r {i} : StrictMonoOn (E i) (Set.Ici 0) := by
-  have diffE : Differentiable ℝ (E i) := by
-    apply Differentiable.add _ (by simp : _)
-    apply Differentiable.sub_const
-    intro x
-    apply DifferentiableAt.comp_const_sub.mpr
-    apply differentiable_phi
   apply strictMonoOn_of_deriv_pos (convex_Ici (0 : ℝ))
-  · apply Continuous.continuousOn
-    exact Differentiable.continuous diffE
+  · unfold E; fun_prop
   · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi]
     intro x hx
     unfold E
@@ -29,9 +22,7 @@ lemma strictMonoOn_E_r {i} : StrictMonoOn (E i) (Set.Ici 0) := by
       rw [lt_neg_add_iff_lt]
       apply Real.rpow_lt_rpow_of_exponent_lt (by norm_num : _)
       linarith
-    · apply DifferentiableAt.sub_const
-      apply DifferentiableAt.comp_const_sub.mpr
-      apply differentiable_phi
+    · fun_prop
     · simp
 
 lemma monotoneOn_E_r {i} : MonotoneOn (E i) (Set.Ici 0) :=
@@ -67,14 +58,12 @@ private lemma f_neg {a} (ha : a ≠ 0) : f a < 0 := by
   rw [← f_zero]
   rcases lt_or_gt_of_ne ha with h | h
   · apply strictMonoOn_of_deriv_pos (convex_Iic 0) _ _ (Set.mem_Iic_of_Iio h) Set.right_mem_Iic h
-    · apply Continuous.continuousOn
-      exact Differentiable.continuous differentiable_f
+    · unfold f; fun_prop
     · simp only [Set.nonempty_Ioi, interior_Iic', Set.mem_Iio, hasDerivAt_f.deriv]
       intro x x_neg
       exact mul_pos (neg_pos.mpr x_neg) (exp_pos _)
   · apply strictAntiOn_of_deriv_neg (convex_Ici 0) _ _ Set.left_mem_Ici (Set.mem_Ici_of_Ioi h) h
-    · apply Continuous.continuousOn
-      exact Differentiable.continuous differentiable_f
+    · unfold f; fun_prop
     · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi, hasDerivAt_f.deriv]
       intro x x_pos
       simp only [neg_mul, Left.neg_neg_iff]
@@ -86,11 +75,10 @@ private lemma h_nonneg (ha : 0 ≤ a) : 0 ≤ h a := by
   dsimp [toFun] at h
   have ⟨dh, deriv_h⟩ := h; clear h
   have h0 : h 0 = 0 := by
-    simp only [h, zero_add, neg_zero, exp_zero, mul_one, zero_sub, add_right_neg]
+    simp only [h, zero_add, neg_zero, exp_zero, mul_one, zero_sub, add_neg_cancel]
   rw [← h0]
   apply monotoneOn_of_deriv_nonneg (convex_Ici 0)
-  · apply Continuous.continuousOn
-    exact Differentiable.continuous dh
+  · unfold h; fun_prop
   · exact Differentiable.differentiableOn dh
   · simp only [Set.nonempty_Iio, interior_Ici', Set.mem_Ioi]
     intro x hx; unfold h
@@ -124,17 +112,14 @@ lemma strictMonoOn_E_i {r} (hr : 0 < r) : StrictMonoOn (fun i => E i r) (Set.Iic
   --     convert h using 1
   --     simp only [rpow_sub zero_lt_two]
   --     field_simp
-  have diff1 : Differentiable ℝ fun y ↦ Φ (y - r) := by
-    intro x
-    rw [DifferentiableAt.comp_sub_const]
-    exact differentiable_phi _
-  have diff2 : Differentiable ℝ fun y ↦ Φ (y - r) - Φ y := Differentiable.sub diff1 differentiable_phi
+  have diff1 : Differentiable ℝ fun y ↦ Φ (y - r) := by fun_prop
+  have diff2 : Differentiable ℝ fun y ↦ Φ (y - r) - Φ y := by fun_prop
   have diff3 : Differentiable ℝ (deriv Φ) := by
     rw [deriv_phi]
     apply Differentiable.div _ diff_aux1 one_plus_two_pow_ne_zero
     exact fun x => (hasDerivAt_two_pow x).differentiableAt
-  have diff4 : Differentiable ℝ (fun y ↦ r * deriv Φ y) := Differentiable.const_mul diff3 _
-  have diffE : Differentiable ℝ (fun i => E i r) := Differentiable.add diff2 diff4
+  have diff4 : Differentiable ℝ (fun y ↦ r * deriv Φ y) := by fun_prop
+  have diffE : Differentiable ℝ (fun i => E i r) := by unfold E; fun_prop
   apply strictMonoOn_of_deriv_pos (convex_Iic 0)
   · apply Continuous.continuousOn
     exact Differentiable.continuous diffE
@@ -149,35 +134,30 @@ lemma strictMonoOn_E_i {r} (hr : 0 < r) : StrictMonoOn (fun i => E i r) (Set.Iic
     set x := (2 : ℝ) ^ (-r)
     set y := (2 : ℝ) ^ i
     have ypos1 : 0 < 1 + y := one_plus_two_pow_pos i
-    apply div_pos
-    · have : (x * y * (1 + y) - (1 + x * y) * y) * (1 + y) ^ 2 + r * (y * log 2) * ((1 + x * y) * (1 + y)) =
-             (1 + y) * y * (y * (r * log 2 * x + x - 1) + (x + r * log 2 - 1)) := by ring
-      rw [this]; clear this
-      apply mul_pos (mul_pos ypos1 (rpow_pos_of_pos two_pos _))
-      set a := r * log 2
-      have a_pos : 0 < a := mul_pos hr (log_pos one_lt_two)
-      have exp_a : x = exp (-a) := by
-        rw [← neg_mul, mul_comm, exp_mul, exp_log two_pos]
-      rw [exp_a]
-      let N t := t * f a + (exp (-a) + a - 1)
-      have : N y = y * (a * exp (-a) + exp (-a) - 1) + (exp (-a) + a - 1) := by simp [f]
-      rw [← this]; clear this
-      have : 0 ≤ N 1 := by
-        have h1 : h a = N 1 := by simp [f, h]; ring
-        rw [← h1]
-        exact h_nonneg (le_of_lt a_pos)
-      apply lt_of_le_of_lt this
-      apply strictAntiOn_of_deriv_neg (convex_Ici 0)
-      · apply Continuous.continuousOn
-        apply Continuous.add (continuous_mul_right _) continuous_const
-      · simp; intro x _
-        exact f_neg (ne_of_gt a_pos)
-      · simp [rpow_nonneg (le_of_lt two_pos)]
-      · simp only [Set.mem_Ici, zero_le_one]
-      · exact rpow_lt_one_of_one_lt_of_neg one_lt_two i_neg
-    · apply mul_pos (mul_pos _ ypos1) (pow_pos ypos1 2)
-      rw [← rpow_add two_pos]
-      exact one_plus_two_pow_pos _
+    have : (x * y * (1 + y) - (1 + x * y) * y) * (1 + y) ^ 2 + r * (y * log 2) * ((1 + x * y) * (1 + y)) =
+           (1 + y) * y * (y * (r * log 2 * x + x - 1) + (x + r * log 2 - 1)) := by ring
+    rw [this]; clear this
+    apply mul_pos (mul_pos ypos1 (rpow_pos_of_pos two_pos _))
+    set a := r * log 2
+    have a_pos : 0 < a := mul_pos hr (log_pos one_lt_two)
+    have exp_a : x = exp (-a) := by
+      rw [← neg_mul, mul_comm, exp_mul, exp_log two_pos]
+    rw [exp_a]
+    let N t := t * f a + (exp (-a) + a - 1)
+    have : N y = y * (a * exp (-a) + exp (-a) - 1) + (exp (-a) + a - 1) := by simp [N, f]
+    rw [← this]; clear this
+    have : 0 ≤ N 1 := by
+      have h1 : h a = N 1 := by simp [N, f, h]; ring
+      rw [← h1]
+      exact h_nonneg (le_of_lt a_pos)
+    apply lt_of_le_of_lt this
+    apply strictAntiOn_of_deriv_neg (convex_Ici 0)
+    · fun_prop
+    · simp [N]; intro x _
+      exact f_neg (ne_of_gt a_pos)
+    · simp [rpow_nonneg (le_of_lt two_pos)]
+    · simp only [Set.mem_Ici, zero_le_one]
+    · exact rpow_lt_one_of_one_lt_of_neg one_lt_two i_neg
 
 lemma monotoneOn_E_i {r} (hr : 0 ≤ r) : MonotoneOn (fun i => E i r) (Set.Iic 0) := by
   rcases lt_or_eq_of_le hr with h | h
@@ -203,6 +183,7 @@ variable (hrnd : ∀ x , |x - rnd x| ≤ ε)
 
 noncomputable def Efix (i r : ℝ) := Φ (i - r) - rnd (Φ i) + rnd (r * rnd (deriv Φ i) )
 
+include hrnd in
 lemma Theorem53 {i r Δ} (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r ≤ Δ) :  |Efix rnd i r| ≤ (E 0 Δ) + (2+Δ)*ε :=by
   set s1 := (Φ i -  rnd (Φ i))
   set s2 := r*(rnd (deriv Φ i) - deriv Φ i)

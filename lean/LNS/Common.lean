@@ -19,10 +19,10 @@ lemma DifferentiableAt.comp_linear {a b x : ℝ} {f : ℝ → ℝ} (ha : a ≠ 0
     DifferentiableAt ℝ (fun x => f (a * x + b)) x ↔ DifferentiableAt ℝ f (a * x + b) := by
   constructor <;> intro df
   · have : f = (fun x => f (a * x + b)) ∘ (fun x => (x - b) / a) := by
-      ext y; congr; field_simp; ring
+      ext y; congr; field_simp
     rw [this]
     apply DifferentiableAt.comp
-    · rw [add_sub_cancel, mul_div_cancel_left _ ha]
+    · rw [add_sub_cancel_right, mul_div_cancel_left₀ _ ha]
       exact df
     · simp only [differentiableAt_id', differentiableAt_const, sub, div_const]
   · rw [← Function.comp]
@@ -49,22 +49,22 @@ lemma DifferentiableAt.comp_const_sub {a x : ℝ} {f : ℝ → ℝ} :
   have : ∀ x, a - x = (-1) * x + a := by intro; ring
   simp only [this, DifferentiableAt.comp_linear (by norm_num : -1 ≠ (0 : ℝ))]
 
-lemma deriv_comp_const_sub {a x : ℝ} {f : ℝ → ℝ} :
-    deriv (fun x => f (a - x)) x = -(deriv f (a - x)) := by
-  have : ∀ x, a - x = (-1) * x + a := by intro; ring
-  simp only [this, deriv_comp_linear]
-  rw [neg_one_mul]
+-- lemma deriv_comp_const_sub {a x : ℝ} {f : ℝ → ℝ} :
+--     deriv (fun x => f (a - x)) x = -(deriv f (a - x)) := by
+--   have : ∀ x, a - x = (-1) * x + a := by intro; ring
+--   simp only [this, deriv_comp_linear]
+--   rw [neg_one_mul]
 
 lemma DifferentiableAt.comp_sub_const {a x : ℝ} {f : ℝ → ℝ} :
     DifferentiableAt ℝ (fun x => f (x - a)) x ↔ DifferentiableAt ℝ f (x - a) := by
   have : ∀ x, x - a = 1 * x + -a := by intro; ring
   simp only [this, DifferentiableAt.comp_linear (by norm_num : 1 ≠ (0 : ℝ))]
 
-lemma deriv_comp_sub_const {a x : ℝ} {f : ℝ → ℝ} :
-    deriv (fun x => f (x - a)) x = deriv f (x - a) := by
-  have : ∀ x, x - a = 1 * x + -a := by intro; ring
-  simp only [this, deriv_comp_linear]
-  rw [one_mul]
+-- lemma deriv_comp_sub_const {a x : ℝ} {f : ℝ → ℝ} :
+--     deriv (fun x => f (x - a)) x = deriv f (x - a) := by
+--   have : ∀ x, x - a = 1 * x + -a := by intro; ring
+--   simp only [this, deriv_comp_linear]
+--   rw [one_mul]
 
 section Derivatives
 
@@ -91,7 +91,7 @@ section Limits
 open Real Filter Topology
 
 lemma tendsto_x_mul_inv_x : Tendsto (fun x : ℝ => x * x⁻¹) (𝓝[≠] 0) (𝓝 1) :=
-  tendsto_nhds_of_eventually_eq $ eventually_nhdsWithin_of_forall (fun _ => mul_inv_cancel)
+  tendsto_nhds_of_eventually_eq $ eventually_nhdsWithin_of_forall (fun _ => mul_inv_cancel₀)
 
 -- Adapted from this proof: https://github.com/leanprover-community/mathlib4/blob/052d8d57c394373282ac1b581e828d9f3625e94c/Mathlib/Analysis/SpecialFunctions/Log/Deriv.lean#L208-L215
 lemma tendsto_log_mul_inv_x (a : ℝ) : Tendsto (fun x : ℝ => log (a * x + 1) * x⁻¹) (𝓝[≠] 0) (𝓝 a) := by
@@ -143,7 +143,7 @@ lemma ceil_div_mul_sub_lt {a b : k} (hb : 0 < b) : ⌈a / b⌉ * b - a < b := by
   exact ceil_lt_add_one _
 
 lemma ceil_div_mul_sub_nonneg {a b : k} (hb : 0 < b) : 0 ≤ ⌈a / b⌉ * b - a := by
-  rw [sub_nonneg, ← div_le_iff hb]
+  rw [sub_nonneg, ← div_le_iff₀ hb]
   exact le_ceil _
 
 end LinearOrderedField

@@ -1,3 +1,6 @@
+import LNS.Common
+import LNS.Basic
+
 /- Unused proofs and ideas -/
 
 -- lemma q_upper_bound (hi : i ≤ 0) (hr1 : 0 ≤ r) (hr2 : r < Δ) : Q Δ i r ≤ Q_hi Δ r := by
@@ -37,3 +40,6 @@
 --     apply Tendsto.log _ one_ne_zero
 --     rw [(by norm_num : 𝓝 (1 : ℝ) = 𝓝 (0 * 2 ^ (-r) + 1))]
 --     exact Tendsto.add_const _ (Tendsto.mul_const _ tendsto_id)
+
+-- lemma deriv_test : Differentiable ℝ (fun (x : ℝ) => 1 + Real.exp x) := by
+--   fun_prop

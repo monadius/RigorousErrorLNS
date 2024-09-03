@@ -879,7 +879,7 @@ lemma q_eq2 : (fun i => Q Δ i r) = (fun i=>h r i / h Δ i) := by
   ext i
   rw[q_eq]
 
-
+include delta_pos in
 lemma q_hi_denom_valid : 2 ^ (-Δ) + Δ * log 2 - 1 > 0 := by
   let f x := 2 ^ (-x) + x * log 2 - 1
   have df : ∀ x, HasDerivAt f (log 2 * (1 - 2 ^ (-x))) x := by
@@ -889,7 +889,7 @@ lemma q_hi_denom_valid : 2 ^ (-Δ) + Δ * log 2 - 1 > 0 := by
     · simp [toFun] at h
       convert h using 1
       ring
-  have f0 : f 0 = 0 := by simp
+  have f0 : f 0 = 0 := by simp [f]
   rw [← f0]
   apply strictMonoOn_of_deriv_pos (convex_Ici 0)
   · apply ContinuousAt.continuousOn
@@ -1771,6 +1771,7 @@ lemma mainlem64 (hr: r>0) (ht0: 0 ≤ t) (htp: t ≤ ΔP) (htr: t ≤ r)
     any_goals linarith;
   linarith
 
+include delta_pos in
 lemma W_pos  (ht0: 0 ≤ t) (htr: t ≤ r) :  W c Δ r t ≥ 0:= by
   have diffE : Differentiable ℝ (E c) := by
     apply Differentiable.add _ (by simp : _)
